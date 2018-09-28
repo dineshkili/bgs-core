@@ -40,7 +40,7 @@ public abstract class BackgroundService extends Service {
 	private final Object mResultLock = new Object();
 	private JSONObject mLatestResult = null;
 
-	private List<BackgroundServiceListener> mListeners = new ArrayList<BackgroundServiceListener>();
+	protected List<BackgroundServiceListener> mListeners = new ArrayList<BackgroundServiceListener>();
 	
 	private TimerTask mUpdateTask;
 	
@@ -143,7 +143,34 @@ public abstract class BackgroundService extends Service {
 	protected void runOnce() {
 		// Runs the doWork once
 		// Sets the last result & updates the listeners
+
+		Log.i(TAG, "RUN ONCE");
 		doWorkWrapper();
+	}
+
+
+	/*
+	 ************************************************************************************************
+	 * Custom Implementation
+	 ************************************************************************************************
+	 */
+	protected void sendUpdate(JSONObject tmp) {		
+	
+		Log.i(TAG, "Syncing result");
+		setLatestResult(tmp);
+		
+		// Now call the listeners
+		Log.i(TAG, "Sending to all listeners");
+		for (int i = 0; i < mListeners.size(); i++)
+		{
+			try {
+				mListeners.get(i).handleUpdate();
+				Log.i(TAG, "Sent listener - " + i);
+			} catch (RemoteException e) {
+				Log.i(TAG, "Failed to send to listener - " + i + " - " + e.getMessage());
+			}
+		}
+		
 	}
 
 	/*
